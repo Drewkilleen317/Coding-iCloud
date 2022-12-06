@@ -103,7 +103,7 @@ def data_entry(page):
 
 
 def main():
-    st.title("Health Data Tracker")
+    st.title("Health Data Tracker II")
 
     menu = ["Data Entry", "Analytics", "About"]
     page = st.sidebar.selectbox("Menu", menu)
