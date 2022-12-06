@@ -69,8 +69,8 @@ def data_entry(page):
         with st.form(key='query_form'):
             date = st.date_input(
                 'Enter Date', value=currentDateTime)
-            TOD = st.selectbox("Select Time of Day", TODs)
-            measure = st.selectbox("Select Data Point", measures)
+            TOD = st.selectbox("Select Time of Day", TODs, index=0 )
+            measure = st.selectbox("Select Data Point", measures, index=0)
 
             value = st.number_input(
                 'Enter Data Value', step=1e-1, format="%.1f")
@@ -103,15 +103,18 @@ def data_entry(page):
 
 
 def main():
-    st.title("Health Data Tracker II")
+    st.title("Health Data Tracker")
 
     menu = ["Data Entry", "Analytics", "About"]
+
     page = st.sidebar.selectbox("Menu", menu)
+    
     actions = {'Data Entry': data_entry,
                'About': about, 'Analytics': analytics}
-    action = actions.get(page)
-    action('page')
 
+    action = actions.get(page)
+
+    action('page')
 
 if __name__ == '__main__':
     main()
