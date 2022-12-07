@@ -1,7 +1,5 @@
 import datetime
 import sqlite3
-# import numpy as np
-# import pandas as pd
 import streamlit as st
 
 db_file = 'Data/Daily_Measures.db'
@@ -10,12 +8,7 @@ conn = sqlite3.connect(db_file)
 
 cur = conn.cursor()
 
-sqlite_insert_with_param = """INSERT INTO MEASUREVALUES
-                            (Date,
-                            TOD,
-                            Measure,
-                            Value)
-                            VALUES (?, ?, ?, ?);"""
+
 
 sqlite_select_query1 = """SELECT * FROM MEASUREVALUES ORDER BY ROWID DESC LIMIT 5;"""
 
@@ -23,7 +16,39 @@ sqlite_select_query1 = """SELECT * FROM MEASUREVALUES ORDER BY ROWID DESC LIMIT 
 TODs = ("Morning", "Midday", "Night")
 measures = ('Glucose', 'Keytones', 'Weight', 'BP-S', 'BP-D', 'Uric Acid')
 currentDateTime = datetime.datetime.now()
+def Create(DB):
+    st.subheader("Create Records")
+    create_query = """INSERT INTO MEASUREVALUES
+                            (Date,
+                            TOD,
+                            Measure,
+                            Value)
+                            VALUES (?, ?, ?, ?);"""
+                            
+    with st.form(key='query_form'):
+            date = st.date_input(
+                'Enter Date', value=currentDateTime)
+            TOD = st.selectbox("Select Time of Day", TODs, index=0 )
+            measure = st.selectbox("Select Data Point", measures, index=0)
 
+            value = st.number_input(
+                'Enter Data Value', step=1e-1, format="%.1f")
+
+            data_tuple = (date,
+                          TOD,
+                          measure,
+                          value)
+
+            submit_data = st.form_submit_button("Submit Data")
+
+def Read(DB):
+    st.subheader("Read Records")
+
+def Update(DB):
+    st.subheader("Update Records")
+
+def Delete(DB):
+    st.subheader("Delete Records")
 
 def analytics(page):
     st.subheader("Analytics")
@@ -64,22 +89,7 @@ def data_entry(page):
     col1, col2 = st.columns([1, 2])
 
     with col1:
-        with st.form(key='query_form'):
-            date = st.date_input(
-                'Enter Date', value=currentDateTime)
-            TOD = st.selectbox("Select Time of Day", TODs, index=0 )
-            measure = st.selectbox("Select Data Point", measures, index=0)
-
-            value = st.number_input(
-                'Enter Data Value', step=1e-1, format="%.1f")
-
-            data_tuple = (date,
-                          TOD,
-                          measure,
-                          value)
-
-            submit_data = st.form_submit_button("Submit Data")
-
+        
     with col2:
         if submit_data:
             st.info("Data Submitted")
@@ -101,14 +111,14 @@ def data_entry(page):
 
 
 def main():
-    st.title("Health Data Tracker")
+    st.title("Health Database Management")
 
-    menu = ["Data Entry", "Analytics", "About"]
+    menu = ["Create Records", "Read Records", "Update Records", "Delete Records"]
 
     page = st.sidebar.selectbox("Menu", menu)
     
-    actions = {'Data Entry': data_entry,
-               'About': about, 'Analytics': analytics}
+    actions = {'Create Records': Create,
+               'Read Records': Read, 'Update Records': Update,'Delete Records': Delete}
 
     action = actions.get(page)
 
