@@ -1,6 +1,5 @@
-import datetime
+from datetime import datetime
 import sqlite3
-
 import numpy as np
 import pandas as pd
 import plotly.figure_factory as ff
