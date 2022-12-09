@@ -1,6 +1,7 @@
 import datetime
 import sqlite3
 import streamlit as st
+import pandas as pd
 
 db_file = 'Data/Daily_Measures.db'
 
@@ -10,29 +11,32 @@ cur = conn.cursor()
 
 
 
-sqlite_select_query1 = """SELECT * FROM MEASUREVALUES ORDER BY ROWID DESC LIMIT 5;"""
 
 
 TODs = ("Morning", "Midday", "Night")
 measures = ('Glucose', 'Keytones', 'Weight', 'BP-S', 'BP-D', 'Uric Acid')
 currentDateTime = datetime.datetime.now()
+
+
 def Create(DB):
     st.subheader("Create Records")
+
+    select_query = """SELECT * FROM MEASUREVALUES ORDER BY ROWID DESC LIMIT 5;"""
+
     create_query = """INSERT INTO MEASUREVALUES
                             (Date,
                             TOD,
                             Measure,
-                            Value)
+                            Value1)
                             VALUES (?, ?, ?, ?);"""
-                            
+
     with st.form(key='query_form'):
             date = st.date_input(
                 'Enter Date', value=currentDateTime)
             TOD = st.selectbox("Select Time of Day", TODs, index=0 )
             measure = st.selectbox("Select Data Point", measures, index=0)
 
-            value = st.number_input(
-                'Enter Data Value', step=1e-1, format="%.1f")
+            value = st.number_input('Enter Data Value', step=1e-1, format="%.1f")
 
             data_tuple = (date,
                           TOD,
@@ -41,6 +45,31 @@ def Create(DB):
 
             submit_data = st.form_submit_button("Submit Data")
 
+    if submit_data:
+                
+
+                conn = sqlite3.connect(db_file)
+                cur = conn.cursor()
+                try:
+                    cur.execute(create_query, data_tuple)
+                    st.info("Data Submitted Successfully")
+                    conn.commit()
+                except sqlite3.Error as er:
+                    st.info("Error Submitting Record: " + str(er))
+
+                # df = pd.read_sql(select_query, con=conn)   OR 
+
+                try:
+                    cur.execute(select_query)
+                    df = pd.DataFrame(cur.fetchall())
+                except sqlite3.Error as er:
+                    st.info("Error Reading Records: " + str(er))
+
+                with st.expander("Pretty Table"):
+                    st.write(df)
+
+                conn.commit()
+                conn.close()
 def Read(DB):
     st.subheader("Read Records")
 
@@ -86,28 +115,23 @@ def data_entry(page):
 
     select_query = """SELECT * FROM MEASUREVALUES;"""
 
-    col1, col2 = st.columns([1, 2])
+            # if submit_data:
+            #     st.info("Data Submitted")
+            #     st.info(insert_query)
 
-    with col1:
-        
-    with col2:
-        if submit_data:
-            st.info("Data Submitted")
-            st.info(insert_query)
+            #     conn = sqlite3.connect(db_file)
+            #     cur = conn.cursor()
 
-            conn = sqlite3.connect(db_file)
-            cur = conn.cursor()
+            #     cur.execute(insert_query, data_tuple)
+            #     conn.commit()
 
-            cur.execute(insert_query, data_tuple)
-            conn.commit()
+            #     df = pd.read_sql(select_query, con=conn)
 
-            df = pd.read_sql(select_query, con=conn)
+            #     with st.expander("Pretty Table"):
+            #         st.write(df)
 
-            with st.expander("Pretty Table"):
-                st.write(df)
-
-            conn.commit()
-            conn.close()
+            #     conn.commit()
+            #     conn.close()
 
 
 def main():
