@@ -27,7 +27,7 @@ def Create(DB):
                             (Date,
                             TOD,
                             Measure,
-                            Value1)
+                            Value)
                             VALUES (?, ?, ?, ?);"""
 
     with st.form(key='query_form'):
