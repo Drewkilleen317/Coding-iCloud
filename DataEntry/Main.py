@@ -23,7 +23,7 @@ sqlite_select_query1 = """SELECT * FROM MEASUREVALUES ORDER BY ROWID DESC LIMIT 
 
 TODs = ("Morning", "Midday", "Night")
 measures = ('Glucose', 'Keytones', 'Weight', 'BP-S', 'BP-D', 'Uric Acid')
-currentDateTime = datetime.datetime.now()
+currentDateTime = datetime.now()
 
 
 def analytics(page):

@@ -59,13 +59,13 @@ def Create(DB):
                 except sqlite3.Error as er:
                     st.info("Error Submitting Record: " + str(er))
 
-                # df = pd.read_sql(select_query, con=conn)   OR 
+                df = pd.read_sql(select_query, con=conn)
 
-                try:
-                    cur.execute(select_query)
-                    df = pd.DataFrame(cur.fetchall())
-                except sqlite3.Error as er:
-                    st.info("Error Reading Records: " + str(er))
+                # try:
+                #     cur.execute(select_query)
+                #     df = pd.DataFrame(cur.fetchall())
+                # except sqlite3.Error as er:
+                #     st.info("Error Reading Records: " + str(er))
 
                 with st.expander("Pretty Table"):
                     st.write(df)
