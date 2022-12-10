@@ -1,7 +1,8 @@
-import datetime
+from datetime import datetime
 import sqlite3
 import streamlit as st
 import pandas as pd
+from bisect import bisect
 
 db_file = 'Data/Daily_Measures.db'
 
@@ -9,13 +10,8 @@ conn = sqlite3.connect(db_file)
 
 cur = conn.cursor()
 
-
-
-
-
 TODs = ("Morning", "Midday", "Night")
 measures = ('Glucose', 'Keytones', 'Weight', 'BP-S', 'BP-D', 'Uric Acid')
-currentDateTime = datetime.datetime.now()
 
 
 def Create(DB):
@@ -30,11 +26,17 @@ def Create(DB):
                             Value)
                             VALUES (?, ?, ?, ?);"""
 
+    currentDateTime = datetime.now()
+    tods = ("Night","Morning","Midday","Night",)
+    tod_breaks = (0, 6, 12, 20, 24)
+    tod_index = bisect(tod_breaks,currentDateTime.hour)-1
+    tod = tods[tod_index]
+
     with st.form(key='query_form'):
             date = st.date_input(
-                'Enter Date', value=currentDateTime)
-            TOD = st.selectbox("Select Time of Day", TODs, index=0 )
-            measure = st.selectbox("Select Data Point", measures, index=0)
+                'Enter Date', value=currentDateTime.date())
+            TOD = st.selectbox("Select Time of Day", TODs, index=TODs.index(tod) )
+            measure = st.selectbox("Select Data Point", measures, index=0 )
 
             value = st.number_input('Enter Data Value', step=1e-1, format="%.1f")
 
