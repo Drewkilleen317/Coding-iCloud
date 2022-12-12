@@ -3,7 +3,8 @@ import sqlite3
 import streamlit as st
 import pandas as pd
 from bisect import bisect
-from st_aggrid import GridOptionsBuilder, AgGrid, GridUpdateMode, DataReturnMode, ColumnsAutoSizeMode
+from st_aggrid import  GridOptionsBuilder, AgGrid, GridUpdateMode, DataReturnMode, ColumnsAutoSizeMode
+import base64
 
 db_file = 'Data/Daily_Measures.db'
 
@@ -12,6 +13,37 @@ cur = conn.cursor()
 
 TODs = ("Morning", "Midday", "Night")
 measures = ('Glucose', 'Keytones', 'Weight', 'BP-S', 'BP-D', 'Uric Acid')
+
+#==========================================================================================
+def add_bg_from_local(image_file):
+    with open(image_file, "rb") as image_file:
+        encoded_string = base64.b64encode(image_file.read())
+    st.markdown(
+    f"""
+    <style>
+    .stApp {{
+        background-image: url(data:image/{"png"};base64,{encoded_string.decode()});
+        background-size: cover
+    }}
+    </style>
+    """,
+    unsafe_allow_html=True
+    ) 
+
+#==========================================================================================
+def add_bg_from_url():
+    st.markdown(
+         f"""
+         <style>
+         .stApp {{
+             background-image: url("https://cdn.pixabay.com/photo/2019/04/24/11/27/flowers-4151900_960_720.jpg");
+             background-attachment: fixed;
+             background-size: cover
+         }}
+         </style>
+         """,
+         unsafe_allow_html=True
+     )
 
 #==========================================================================================
 def Create(DB):
@@ -78,45 +110,64 @@ def Read(page):
 
     conn = sqlite3.connect(db_file)
     cur = conn.cursor()
-    select_query = """SELECT * FROM MEASUREVALUES ORDER BY ROWID DESC;"""
+    select_query = """SELECT * FROM MEASUREVALUES ORDER BY ROWID DESC LIMIT 6;"""
     data = pd.read_sql(select_query, con=conn)
     
-    gb = GridOptionsBuilder.from_dataframe(data)
-    gb.configure_pagination(paginationAutoPageSize=True) #Add pagination
-    gb.configure_side_bar() #Add a sidebar
-    gb.configure_selection('multiple', use_checkbox=True, groupSelectsChildren="Group checkbox select children") 
-    gb.configure_column("Date", header_name="Date", editable=True)
-    gb.configure_column("TOD", header_name="TOD", editable=True)
-    gridOptions = gb.build()
+    with st.form('AgGrid inside a form') as f:
+        gb = GridOptionsBuilder.from_dataframe(data)
+        gb.configure_auto_height(autoHeight=True)
+        gb.configure_pagination(paginationPageSize=6) 
+        gb.configure_side_bar() 
+        gb.configure_selection('multiple', use_checkbox=True, groupSelectsChildren="Group checkbox select children") 
+        gb.configure_column("Date", header_name="Date", editable=True)
+        gb.configure_column("TOD",
+            header_name="TOD",
+            cellEditor='agRichSelectCellEditor',
+            cellEditorParams={'values':TODs},
+            cellEditorPopup=True,
+            editable=True)
+        gb.configure_column("Measure",
+            header_name="Measure",
+            cellEditor='agRichSelectCellEditor',
+            cellEditorParams={'values':measures},
+            cellEditorPopup=True,
+            editable=True)
+        gridOptions = gb.build()
+        gb.configure_grid_options(enableRangeSelection=True)
 
-    grid_response = AgGrid(
-        data,
-        gridOptions=gridOptions,
-        data_return_mode='AS_INPUT', 
-        update_mode='MODEL_CHANGED', 
-        fit_columns_on_grid_load=False,
-        enable_enterprise_modules=True,
-        height=350, 
-        width='100%',
-        theme = "streamlit",
-        editable=True,
-        columns_auto_size_mode=ColumnsAutoSizeMode.FIT_CONTENTS
-    )
-    data = grid_response['data']
-    selected = grid_response['selected_rows'] 
-    new_frame = pd.DataFrame(selected)
-    st.write(new_frame)
-    grid_response = AgGrid(
-        new_frame,
-        gridOptions=gridOptions,
-        data_return_mode='AS_INPUT', 
-        update_mode='MODEL_CHANGED', 
-        fit_columns_on_grid_load=False,
-        enable_enterprise_modules=True,
-        height=350, 
-        width='100%',
-        columns_auto_size_mode=ColumnsAutoSizeMode.FIT_CONTENTS
+        grid_response = AgGrid(
+            data,
+            autoHeight=True,
+            gridOptions=gridOptions,
+            data_return_mode='AS_INPUT', 
+            update_mode='MODEL_CHANGED', 
+            fit_columns_on_grid_load=False,
+            enable_enterprise_modules=True,
+            height=350, 
+            width='100%',
+            theme = "streamlit",
+            editable=True,
+            columns_auto_size_mode=ColumnsAutoSizeMode.FIT_CONTENTS
         )
+
+        submit_data = st.form_submit_button()
+
+    if submit_data:
+        data = grid_response['data']
+        selected = grid_response['selected_rows'] 
+        new_frame = pd.DataFrame(selected)
+
+        grid_response = AgGrid(
+            new_frame,
+            gridOptions=gridOptions,
+            data_return_mode='AS_INPUT', 
+            update_mode='MODEL_CHANGED', 
+            fit_columns_on_grid_load=False,
+            enable_enterprise_modules=True,
+            height=350, 
+            width='100%',
+            columns_auto_size_mode=ColumnsAutoSizeMode.FIT_CONTENTS
+            )
     conn.close()
    
 #==========================================================================================    
@@ -182,6 +233,9 @@ def data_entry(page):
 
 #==========================================================================================
 def main():
+    image_file = "BH_Sunset_001.png"
+    add_bg_from_local(image_file)
+
     st.title("Health Database Management")
 
     menu = ["Create Records", "Read Records", "Update Records", "Delete Records"]
